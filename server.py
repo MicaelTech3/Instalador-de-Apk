@@ -109,7 +109,7 @@ def download_adb_in_background():
             url = "https://dl.google.com/android/repository/platform-tools-latest-darwin.zip"
             
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        zip_path = os.path.join(SCRIPT_DIR, "platform_tools_temp.zip")
+        zip_path = os.path.join(APP_DATA_DIR, "platform_tools_temp.zip")
         
         log_event("Baixando Platform Tools do site oficial da Google...")
         with urllib.request.urlopen(req) as response:
@@ -133,7 +133,7 @@ def download_adb_in_background():
         adb_download_percent = 90
         
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(SCRIPT_DIR)
+            zip_ref.extractall(APP_DATA_DIR)
             
         try:
             os.remove(zip_path)

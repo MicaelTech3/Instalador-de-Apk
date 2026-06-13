@@ -525,11 +525,39 @@ export default function App() {
         <div className="overlay">
           <Smartphone size={48} style={{color: 'var(--accent-purple)'}} />
           <h2 style={{fontWeight: 800}}>Configurando Android Tools (ADB)</h2>
-          <p style={{color: 'var(--text-muted)', fontSize: '0.95rem'}}>{adbStatus.status}</p>
-          <div className="progress-container">
-            <div className="progress-bar" style={{ width: `${adbStatus.percent >= 0 ? adbStatus.percent : 0}%` }}></div>
-          </div>
-          <span style={{fontSize: '0.85rem', color: 'var(--text-muted)'}}>{adbStatus.percent}% concluído</span>
+          <p style={{color: 'var(--text-muted)', fontSize: '0.95rem', maxWidth: '400px', textAlign: 'center'}}>{adbStatus.status}</p>
+          
+          {adbStatus.percent >= 0 && (
+            <>
+              <div className="progress-container">
+                <div className="progress-bar" style={{ width: `${adbStatus.percent}%` }}></div>
+              </div>
+              <span style={{fontSize: '0.85rem', color: 'var(--text-muted)'}}>{adbStatus.percent}% concluído</span>
+            </>
+          )}
+
+          {adbStatus.percent === -1 && (
+            <button 
+              className="btn btn-purple" 
+              onClick={() => {
+                setAdbStatus({ ready: false, percent: 0, status: 'Reiniciando download...' });
+                apiFetch('/api/adb-download', { method: 'POST' });
+              }}
+              style={{ 
+                marginTop: '20px', 
+                padding: '10px 24px', 
+                background: 'linear-gradient(135deg, var(--accent-purple) 0%, #a855f7 100%)',
+                color: '#fff',
+                fontWeight: 700,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(124, 77, 255, 0.3)'
+              }}
+            >
+              Tentar Configurar Novamente
+            </button>
+          )}
         </div>
       )}
 
