@@ -8,6 +8,25 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def build_app():
     try:
+        # 0. Converter coding.png para coding.ico
+        print("=== 0. CONVERTENDO PNG PARA ICO ===")
+        png_path = os.path.join(ROOT_DIR, "frontend", "public", "coding.png")
+        ico_path = os.path.join(ROOT_DIR, "coding.ico")
+        
+        try:
+            from PIL import Image
+        except ImportError:
+            print("Instalando Pillow para conversão de imagens...")
+            subprocess.run(f'"{sys.executable}" -m pip install pillow', shell=True, check=True)
+            from PIL import Image
+            
+        if os.path.exists(png_path):
+            img = Image.open(png_path)
+            img.save(ico_path, format='ICO', sizes=[(16,16), (32,32), (48,48), (64,64), (128,128), (256,256)])
+            print(f"✅ Ícone .ico gerado com sucesso em: {ico_path}")
+        else:
+            print(f"⚠️ Aviso: coding.png não encontrado em {png_path}")
+
         # 1. Compilar o frontend React
         print("=== 1. COMPILANDO FRONTEND REACT ===")
         frontend_dir = os.path.join(ROOT_DIR, "frontend")
@@ -27,6 +46,7 @@ def build_app():
         # Usamos --noconfirm para sobrescrever builds anteriores e --windowed para não exibir o cmd preto por trás
         pyinstaller_cmd = (
             'pyinstaller --noconfirm --onedir --windowed '
+            '--icon "coding.ico" '
             '--add-data "frontend/dist;frontend/dist" '
             '--name "ADB_Companion" '
             'server.py'

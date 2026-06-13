@@ -12,6 +12,7 @@ AppVersion=1.0
 DefaultDirName={{autopf}}\\ADB Companion
 DefaultGroupName=ADB Companion
 UninstallDisplayIcon={{app}}\\ADB_Companion.exe
+SetupIconFile={ROOT_DIR}\\coding.ico
 OutputDir={ROOT_DIR}\\dist
 OutputBaseFilename=ADB_Companion_Setup
 Compression=lzma2

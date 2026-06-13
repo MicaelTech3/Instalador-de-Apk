@@ -44,3 +44,8 @@ platform_tools_temp.zip
 *.sln
 *.swp
 .DS_Store
+
+# Executaveis pesados gerados no build
+frontend/public/ADB_Companion_Setup.exe
+frontend/public/ADB_Companion.zip
+coding.ico

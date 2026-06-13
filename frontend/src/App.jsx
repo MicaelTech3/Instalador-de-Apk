@@ -511,18 +511,20 @@ export default function App() {
 
           <div className="hero-buttons">
             <a 
-              href="/ADB_Companion_Setup.exe" 
+              href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/v1.0.0/ADB_Companion_Setup.exe" 
               className="btn-hero-primary"
-              download
+              target="_blank"
+              rel="noopener noreferrer"
             >
               <Smartphone size={20} />
               Baixar Instalador Oficial (.exe)
             </a>
             
             <a 
-              href="/ADB_Companion.zip" 
+              href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/v1.0.0/ADB_Companion.zip" 
               className="btn-hero-secondary"
-              download
+              target="_blank"
+              rel="noopener noreferrer"
             >
               <Upload size={18} style={{ transform: 'rotate(180deg)' }} />
               Baixar Versão Portátil (.zip)
@@ -708,116 +710,111 @@ export default function App() {
             <h1 className="tab-title">Meus Aplicativos</h1>
             <p className="tab-subtitle">Monitore, inicie, pare ou remova aplicativos instalados no aparelho conectado.</p>
             
-            <div className="app-list-container">
-              {/* LISTA DA ESQUERDA */}
-              <div className="app-list-sidebar">
-                <div className="search-container">
+            {/* TOOLBAR DE AÇÕES NO TOPO */}
+            <div className="card" style={{ padding: '16px', marginBottom: '16px', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button 
+                  className="btn btn-teal" 
+                  onClick={launchApp}
+                  disabled={!selectedApp}
+                >
+                  <Play size={15} />
+                  Iniciar Aplicativo
+                </button>
+
+                <button 
+                  className="btn" 
+                  onClick={stopApp}
+                  disabled={!selectedApp}
+                >
+                  <Square size={15} />
+                  Forçar Parada
+                </button>
+
+                <button 
+                  className="btn" 
+                  onClick={clearAppData}
+                  disabled={!selectedApp}
+                >
+                  <RefreshCw size={15} />
+                  Limpar Dados / Cache
+                </button>
+
+                <button 
+                  className="btn" 
+                  onClick={downloadSelectedAppApk}
+                  disabled={!selectedApp}
+                >
+                  <Upload size={15} style={{ transform: 'rotate(180deg)' }} />
+                  Download do APK para o PC
+                </button>
+
+                <button 
+                  className="btn btn-red" 
+                  onClick={uninstallApp}
+                  disabled={!selectedApp}
+                >
+                  <Trash2 size={15} />
+                  Desinstalar Aplicativo
+                </button>
+              </div>
+
+              {selectedApp && (
+                <div style={{ 
+                  background: 'var(--bg-input)', 
+                  border: '1px solid var(--border-color)', 
+                  borderRadius: '6px', 
+                  padding: '6px 12px',
+                  fontFamily: 'var(--font-monospace)', 
+                  fontSize: '0.8rem', 
+                  fontWeight: 600, 
+                  color: 'var(--text-main)' 
+                }}>
+                  {selectedApp}
+                </div>
+              )}
+            </div>
+
+            {/* LISTA COMPLETA DOS APLICATIVOS */}
+            <div className="app-list-container-full" style={{ flex: 1, minHeight: 0 }}>
+              <div className="search-container">
+                <input 
+                  type="text" 
+                  placeholder="Buscar aplicativo..." 
+                  className="search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="checkbox-group" style={{ marginBottom: '12px' }}>
+                <label className="checkbox-label">
                   <input 
-                    type="text" 
-                    placeholder="Buscar aplicativo..." 
-                    className="search-input"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    type="checkbox" 
+                    checked={showSystemApps}
+                    onChange={(e) => setShowSystemApps(e.target.checked)}
                   />
-                </div>
+                  Exibir Apps de Sistema
+                </label>
+              </div>
 
-                <div className="checkbox-group">
-                  <label className="checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      checked={showSystemApps}
-                      onChange={(e) => setShowSystemApps(e.target.checked)}
-                    />
-                    Exibir Apps de Sistema
-                  </label>
-                </div>
-
-                <ul className="app-list">
-                  {filteredApps.length === 0 ? (
-                    <li style={{padding: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center'}}>
-                      Nenhum aplicativo localizado.
+              <ul className="app-list" style={{ flex: 1, minHeight: 0 }}>
+                {filteredApps.length === 0 ? (
+                  <li style={{padding: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center'}}>
+                    Nenhum aplicativo localizado.
+                  </li>
+                ) : (
+                  filteredApps.map(pkg => (
+                    <li 
+                      key={pkg} 
+                      className={`app-item ${selectedApp === pkg ? 'selected' : ''}`}
+                      onClick={() => setSelectedApp(pkg)}
+                    >
+                      {pkg}
                     </li>
-                  ) : (
-                    filteredApps.map(pkg => (
-                      <li 
-                        key={pkg} 
-                        className={`app-item ${selectedApp === pkg ? 'selected' : ''}`}
-                        onClick={() => setSelectedApp(pkg)}
-                      >
-                        {pkg}
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-
-              {/* DETALHES DA DIREITA */}
-              <div className="app-details-pane">
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)' }}>
-                    Ações do Aplicativo
-                  </h3>
-                  
-                  {selectedApp ? (
-                    <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Pacote Selecionado</p>
-                      <p style={{ fontFamily: 'var(--font-monospace)', fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all', fontWeight: 600 }}>{selectedApp}</p>
-                    </div>
-                  ) : (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic', marginBottom: '24px' }}>
-                      Selecione um pacote na lista lateral para ver os comandos rápidos disponíveis.
-                    </p>
-                  )}
-                </div>
-
-                <div className="app-actions-panel">
-                  <button 
-                    className="btn btn-teal btn-wide" 
-                    onClick={launchApp}
-                    disabled={!selectedApp}
-                  >
-                    <Play size={16} />
-                    Iniciar Aplicativo
-                  </button>
-
-                  <button 
-                    className="btn btn-wide" 
-                    onClick={stopApp}
-                    disabled={!selectedApp}
-                  >
-                    <Square size={16} />
-                    Forçar Parada
-                  </button>
-
-                  <button 
-                    className="btn btn-wide" 
-                    onClick={clearAppData}
-                    disabled={!selectedApp}
-                  >
-                    <RefreshCw size={16} />
-                    Limpar Dados / Cache
-                  </button>
-
-                  <button 
-                    className="btn btn-wide" 
-                    onClick={downloadSelectedAppApk}
-                    disabled={!selectedApp}
-                  >
-                    <Upload size={16} style={{ transform: 'rotate(180deg)' }} />
-                    Download do APK para o PC
-                  </button>
-
-                  <button 
-                    className="btn btn-red btn-wide" 
-                    onClick={uninstallApp}
-                    disabled={!selectedApp}
-                    style={{ marginTop: '16px' }}
-                  >
-                    <Trash2 size={16} />
-                    Desinstalar Aplicativo
-                  </button>
-                </div>
-              </div>
+                  ))
+                )}
+              </ul>
             </div>
           </div>
         )}

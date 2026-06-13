@@ -710,12 +710,24 @@ if __name__ == "__main__":
             
             url_to_open = "http://localhost:5173" if is_vite_running() else f"http://localhost:{PORT}"
             log_event(f"Iniciando janela nativa desktop (pywebview) apontando para: {url_to_open}...")
+            
+            # Resolve o caminho do ícone para a janela do pywebview
+            icon_path = None
+            if hasattr(sys, '_MEIPASS'):
+                path_try = os.path.join(sys._MEIPASS, "frontend", "dist", "coding.png")
+            else:
+                path_try = os.path.join(SCRIPT_DIR, "frontend", "public", "coding.png")
+            if os.path.exists(path_try):
+                icon_path = path_try
+                log_event(f"Ícone da janela carregado de: {icon_path}")
+                
             webview.create_window(
                 title="Android Companion & ADB Installer",
                 url=url_to_open,
                 width=1320,
                 height=880,
-                resizable=True
+                resizable=True,
+                icon=icon_path
             )
             webview.start()
             log_event("Janela fechada pelo usuário. Encerrando servidor...")
