@@ -853,26 +853,49 @@ export default function App() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <a 
-                href="/ADB_Companion.zip" 
-                className="btn btn-teal btn-wide" 
+                href="/ADB_Companion_Setup.exe" 
+                className="btn btn-purple btn-wide" 
                 style={{ 
-                  background: 'linear-gradient(135deg, var(--accent-teal) 0%, #00b0ff 100%)', 
-                  color: '#0d0d0d', 
+                  background: 'linear-gradient(135deg, var(--accent-purple) 0%, #a855f7 100%)', 
+                  color: '#fff', 
                   textDecoration: 'none',
-                  padding: '12px',
+                  padding: '12.5px',
                   fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 15px rgba(124, 77, 255, 0.4)'
                 }}
                 download
               >
-                <Upload size={18} style={{ marginRight: '8px', transform: 'rotate(180deg)' }} />
-                Baixar ADB Companion para Windows (.zip)
+                <Smartphone size={18} style={{ marginRight: '8px' }} />
+                Baixar Instalador do ADB Companion (.exe) - Recomendado
+              </a>
+
+              <a 
+                href="/ADB_Companion.zip" 
+                className="btn" 
+                style={{ 
+                  background: 'transparent', 
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#ccc', 
+                  textDecoration: 'none',
+                  padding: '10px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem'
+                }}
+                download
+              >
+                <Upload size={16} style={{ marginRight: '8px', transform: 'rotate(180deg)' }} />
+                Baixar Versão Portátil (.zip)
               </a>
               <span style={{ fontSize: '0.8rem', color: '#55556d' }}>
-                Descompacte o arquivo ZIP e execute o <strong>ADB_Companion.exe</strong>. O site se conectará automaticamente.
+                O instalador oficial (.exe) ajuda a evitar falsos positivos de vírus no Windows Defender.
               </span>
             </div>
           </div>

@@ -20,14 +20,20 @@ except ImportError:
 # Porta do Servidor Web
 PORT = 5000
 
-# Localização do ADB (persiste ao lado do executável ou script)
+# Localização do ADB (evita WinError 5 usando LOCALAPPDATA quando compilado)
 if hasattr(sys, 'frozen'):
     SCRIPT_DIR = os.path.dirname(sys.executable)
+    # Salva o ADB e dados na pasta do usuário (%LOCALAPPDATA%) para garantir permissão de escrita
+    APP_DATA_DIR = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), "ADB_Companion")
 else:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    APP_DATA_DIR = SCRIPT_DIR
 
-ADB_DIR = os.path.join(SCRIPT_DIR, "platform-tools")
+ADB_DIR = os.path.join(APP_DATA_DIR, "platform-tools")
 ADB_PATH = os.path.join(ADB_DIR, "adb.exe" if os.name == 'nt' else "adb")
+
+# Garante que a pasta de dados exista
+os.makedirs(APP_DATA_DIR, exist_ok=True)
 
 # Cache em memória
 selected_device = None

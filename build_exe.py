@@ -44,6 +44,15 @@ def build_app():
         shutil.make_archive(zip_output_path, 'zip', os.path.join(ROOT_DIR, "dist", "ADB_Companion"))
         print(f"ZIP gerado com sucesso em: {zip_output_path}.zip")
         
+        # 5. Gerar o instalador Inno Setup
+        print("\n=== 5. GERANDO INSTALADOR (INNO SETUP) ===")
+        try:
+            import build_installer
+            iss_path = build_installer.create_inno_script()
+            build_installer.compile_installer(iss_path)
+        except Exception as err_setup:
+            print(f"Aviso: Não foi possível gerar o instalador automático: {err_setup}")
+        
         print("\n" + "="*40)
         print("SUCESSO! O executável foi gerado com êxito.")
         print(f"Você pode encontrá-lo em: D:\\instalador de apps\\dist\\ADB_Companion\\ADB_Companion.exe")
