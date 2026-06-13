@@ -14,7 +14,6 @@ import {
   Info,
   CheckCircle2,
   XCircle,
-  Eye,
   AlertCircle
 } from 'lucide-react';
 
@@ -32,6 +31,7 @@ export default function App() {
   // Estados da Aplicação
   const [adbStatus, setAdbStatus] = useState({ ready: false, percent: 0, status: 'Verificando...' });
   const [localServerRunning, setLocalServerRunning] = useState(true);
+  const [activeTab, setActiveTab] = useState('apps'); // tabs: apps, install, launcher, terminal
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState('');
   const [apps, setApps] = useState([]);
@@ -51,8 +51,8 @@ export default function App() {
   // Notificação customizada
   const [notification, setNotification] = useState({ message: '', type: '' });
   
-  // Referências para auto-scroll do console
-  const consoleEndRef = useRef(null);
+  // Referência para auto-scroll do console log
+  const consoleContainerRef = useRef(null);
 
   // Mostrar notificação
   const showToast = (message, type = 'info') => {
@@ -139,10 +139,11 @@ export default function App() {
     }
   }, [selectedDevice, showSystemApps]);
 
-  // Auto-scroll do console de logs
+  // Auto-scroll do console de logs (apenas no container interno do console)
   useEffect(() => {
-    if (consoleEndRef.current) {
-      consoleEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const container = consoleContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
     }
   }, [logs]);
 
@@ -445,7 +446,6 @@ export default function App() {
     }
   };
 
-
   // --- MANIPULADORES DE ARQUIVO (DRAG & DROP) ---
   const handleDrag = (e) => {
     e.preventDefault();
@@ -485,9 +485,84 @@ export default function App() {
     pkg.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // SE O SERVIDOR DESKTOP NÃO ESTIVER RODANDO, EXIBE A PÁGINA DE BOAS VINDAS / DOWNLOAD
+  if (!localServerRunning) {
+    return (
+      <div className="landing-page">
+        {/* HEADER DE BOAS VINDAS */}
+        <header className="landing-header">
+          <div className="landing-brand">
+            <Smartphone size={24} style={{ color: 'var(--accent-purple)' }} />
+            <span style={{ fontWeight: 800 }}>ADB Companion</span>
+          </div>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            v1.0.0 Oficial
+          </span>
+        </header>
+
+        {/* HERO SECTION */}
+        <section className="hero-section">
+          <h1 className="hero-title">
+            Gerencie seu Android e Android TV <span>direto pelo navegador</span>
+          </h1>
+          <p className="hero-subtitle">
+            Instale APKs, gerencie pacotes, altere launchers padrão e envie comandos ADB para a sua TV Box, Fire Stick ou Celular através de um instalador leve e prático.
+          </p>
+
+          <div className="hero-buttons">
+            <a 
+              href="/ADB_Companion_Setup.exe" 
+              className="btn-hero-primary"
+              download
+            >
+              <Smartphone size={20} />
+              Baixar Instalador Oficial (.exe)
+            </a>
+            
+            <a 
+              href="/ADB_Companion.zip" 
+              className="btn-hero-secondary"
+              download
+            >
+              <Upload size={18} style={{ transform: 'rotate(180deg)' }} />
+              Baixar Versão Portátil (.zip)
+            </a>
+          </div>
+        </section>
+
+        {/* CARDS DE FUNCIONALIDADES */}
+        <section className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Upload size={20} />
+            </div>
+            <h3>Instalador de APKs</h3>
+            <p>Arraste e solte arquivos APK diretamente do seu computador para a janela da web e instale-os no seu aparelho sem digitar nenhum comando.</p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Layers size={20} />
+            </div>
+            <h3>Gerenciador de Aplicativos</h3>
+            <p>Monitore os apps instalados. Você pode iniciar aplicativos remotamente, forçar parada, limpar cache/dados ou desinstalar com um clique.</p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Home size={20} />
+            </div>
+            <h3>Configurador de Launcher</h3>
+            <p>Defina launchers alternativos como Projectivy Launcher, Wolf Launcher ou ATV Launcher como padrão no seu sistema Android TV de forma simples.</p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // SE O SERVIDOR DESKTOP ESTIVER RODANDO, EXIBE O DASHBOARD COMPLETO COM SIDEBAR
   return (
-    <div className="app-container">
-      
+    <div className="app-layout">
       {/* Toast de Notificação flutuante */}
       {notification.message && (
         <div style={{
@@ -503,11 +578,12 @@ export default function App() {
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          animation: 'spin-fade-in 0.3s ease-out'
+          animation: 'spin-fade-in 0.3s ease-out',
+          color: '#ffffff'
         }}>
-          {notification.type === 'success' && <CheckCircle2 size={18} className="text-teal" style={{color: 'var(--accent-teal)'}} />}
-          {notification.type === 'error' && <XCircle size={18} className="text-red" style={{color: 'var(--accent-red)'}} />}
-          {notification.type === 'info' && <Info size={18} className="text-blue" style={{color: 'var(--accent-blue)'}} />}
+          {notification.type === 'success' && <CheckCircle2 size={18} style={{color: 'var(--accent-teal)'}} />}
+          {notification.type === 'error' && <XCircle size={18} style={{color: 'var(--accent-red)'}} />}
+          {notification.type === 'info' && <Info size={18} style={{color: 'var(--accent-blue)'}} />}
           <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{notification.message}</span>
         </div>
       )}
@@ -525,34 +601,23 @@ export default function App() {
         <div className="overlay">
           <Smartphone size={48} style={{color: 'var(--accent-purple)'}} />
           <h2 style={{fontWeight: 800}}>Configurando Android Tools (ADB)</h2>
-          <p style={{color: 'var(--text-muted)', fontSize: '0.95rem', maxWidth: '400px', textAlign: 'center'}}>{adbStatus.status}</p>
+          <p style={{color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '400px', textAlign: 'center'}}>{adbStatus.status}</p>
           
           {adbStatus.percent >= 0 && (
             <>
               <div className="progress-container">
                 <div className="progress-bar" style={{ width: `${adbStatus.percent}%` }}></div>
               </div>
-              <span style={{fontSize: '0.85rem', color: 'var(--text-muted)'}}>{adbStatus.percent}% concluído</span>
+              <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>{adbStatus.percent}% concluído</span>
             </>
           )}
 
           {adbStatus.percent === -1 && (
             <button 
-              className="btn btn-purple" 
+              className="btn btn-primary" 
               onClick={() => {
                 setAdbStatus({ ready: false, percent: 0, status: 'Reiniciando download...' });
                 apiFetch('/api/adb-download', { method: 'POST' });
-              }}
-              style={{ 
-                marginTop: '20px', 
-                padding: '10px 24px', 
-                background: 'linear-gradient(135deg, var(--accent-purple) 0%, #a855f7 100%)',
-                color: '#fff',
-                fontWeight: 700,
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 10px rgba(124, 77, 255, 0.3)'
               }}
             >
               Tentar Configurar Novamente
@@ -561,374 +626,364 @@ export default function App() {
         </div>
       )}
 
-      {/* --- BARRA SUPERIOR DE STATUS --- */}
-      <header className="status-bar">
-        <div className="status-info">
-          <div className={`status-dot ${selectedDevice ? 'connected' : 'disconnected'}`}></div>
-          <div className="status-text">
-            {selectedDevice ? `Status: OK - Aparelho Conectado` : 'Nenhum dispositivo detectado'}
+      {/* SIDEBAR DA APLICAÇÃO */}
+      <aside className="sidebar">
+        <div className="sidebar-header-group">
+          <div className="sidebar-brand">
+            <Smartphone size={22} style={{ color: 'var(--accent-purple)' }} />
+            <span>ADB Companion</span>
           </div>
+
+          <div className="sidebar-device-status">
+            <div className={`status-dot ${selectedDevice ? 'connected' : 'disconnected'}`}></div>
+            <span className="status-text-compact">
+              {selectedDevice ? selectedDevice : 'Sem dispositivo'}
+            </span>
+          </div>
+
+          <nav className="sidebar-nav">
+            <button 
+              className={`nav-item ${activeTab === 'apps' ? 'active' : ''}`}
+              onClick={() => setActiveTab('apps')}
+            >
+              <Layers size={18} />
+              <span>Meus Aplicativos</span>
+            </button>
+
+            <button 
+              className={`nav-item ${activeTab === 'install' ? 'active' : ''}`}
+              onClick={() => setActiveTab('install')}
+            >
+              <Upload size={18} />
+              <span>Instalar APK</span>
+            </button>
+
+            <button 
+              className={`nav-item ${activeTab === 'launcher' ? 'active' : ''}`}
+              onClick={() => setActiveTab('launcher')}
+            >
+              <Home size={18} />
+              <span>Gerenciar Launcher</span>
+            </button>
+
+            <button 
+              className={`nav-item ${activeTab === 'terminal' ? 'active' : ''}`}
+              onClick={() => setActiveTab('terminal')}
+            >
+              <Terminal size={18} />
+              <span>Console & Logs</span>
+            </button>
+          </nav>
         </div>
-        
-        <div className="device-picker-container">
-          <label className="form-label" style={{margin: 0}}>Aparelho ativo:</label>
+
+        <div className="sidebar-footer">
+          <label className="sidebar-label">Aparelho Conectado</label>
           <select 
-            className="device-select"
+            className="device-select-sidebar"
             value={selectedDevice}
             onChange={handleDeviceChange}
             disabled={devices.length === 0}
           >
             {devices.length === 0 ? (
-              <option value="">Sem dispositivos conectados</option>
+              <option value="">Nenhum conectado</option>
             ) : (
               devices.map(dev => (
                 <option key={dev} value={dev}>{dev}</option>
               ))
             )}
           </select>
-          <button className="btn" onClick={refreshDevices} title="Atualizar aparelhos">
-            <RefreshCw size={16} />
-            <span>Atualizar</span>
+          <button className="btn-sidebar-refresh" onClick={refreshDevices}>
+            <RefreshCw size={14} />
+            <span>Atualizar Lista</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* --- DASHBOARD PRINCIPAL GRID --- */}
-      <main className="dashboard-grid">
+      {/* PAINEL PRINCIPAL DE CONTEÚDO */}
+      <main className="main-content">
         
-        {/* COLUNA ESQUERDA: INSTALAÇÃO & LAUNCHERS */}
-        <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
-          
-          {/* CARD 1: INSTALAÇÃO DE APK */}
-          <section className="card">
-            <h2 className="card-title">
-              <Upload size={18} style={{color: 'var(--accent-purple)'}} />
-              Instalar APK no Aparelho
-            </h2>
+        {/* ABA: MEUS APLICATIVOS */}
+        {activeTab === 'apps' && (
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <h1 className="tab-title">Meus Aplicativos</h1>
+            <p className="tab-subtitle">Monitore, inicie, pare ou remova aplicativos instalados no aparelho conectado.</p>
             
-            <div 
-              className={`dropzone ${dragActive ? 'active' : ''}`}
-              onDragEnter={handleDrag}
-              onDragOver={handleDrag}
-              onDragLeave={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById('apk-file-input').click()}
-            >
-              <Upload className="dropzone-icon" size={32} />
-              <p style={{fontWeight: 600, fontSize: '0.9rem'}}>Arrastar & Soltar APK aqui</p>
-              <p style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>ou clique para selecionar arquivo</p>
-              <input 
-                id="apk-file-input"
-                type="file" 
-                accept=".apk" 
-                style={{display: 'none'}} 
-                onChange={handleFileChange}
-              />
-            </div>
-
-            {selectedFile && (
-              <div className="file-info">
-                <div style={{display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden'}}>
-                  <span style={{fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden'}}>{selectedFile.name}</span>
-                  <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>{(selectedFile.size / (1024*1024)).toFixed(2)} MB</span>
+            <div className="app-list-container">
+              {/* LISTA DA ESQUERDA */}
+              <div className="app-list-sidebar">
+                <div className="search-container">
+                  <input 
+                    type="text" 
+                    placeholder="Buscar aplicativo..." 
+                    className="search-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <button className="btn btn-red" onClick={() => setSelectedFile(null)} style={{padding: '5px 10px', fontSize: '0.8rem'}}>Remover</button>
+
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={showSystemApps}
+                      onChange={(e) => setShowSystemApps(e.target.checked)}
+                    />
+                    Exibir Apps de Sistema
+                  </label>
+                </div>
+
+                <ul className="app-list">
+                  {filteredApps.length === 0 ? (
+                    <li style={{padding: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center'}}>
+                      Nenhum aplicativo localizado.
+                    </li>
+                  ) : (
+                    filteredApps.map(pkg => (
+                      <li 
+                        key={pkg} 
+                        className={`app-item ${selectedApp === pkg ? 'selected' : ''}`}
+                        onClick={() => setSelectedApp(pkg)}
+                      >
+                        {pkg}
+                      </li>
+                    ))
+                  )}
+                </ul>
               </div>
-            )}
 
-            <button 
-              className="btn btn-primary" 
-              onClick={installApk}
-              disabled={!selectedFile || !selectedDevice}
-              style={{padding: '12px'}}
-            >
-              <Sparkles size={16} />
-              Instalar APK no Aparelho [OK]
-            </button>
-          </section>
+              {/* DETALHES DA DIREITA */}
+              <div className="app-details-pane">
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)' }}>
+                    Ações do Aplicativo
+                  </h3>
+                  
+                  {selectedApp ? (
+                    <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Pacote Selecionado</p>
+                      <p style={{ fontFamily: 'var(--font-monospace)', fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all', fontWeight: 600 }}>{selectedApp}</p>
+                    </div>
+                  ) : (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic', marginBottom: '24px' }}>
+                      Selecione um pacote na lista lateral para ver os comandos rápidos disponíveis.
+                    </p>
+                  )}
+                </div>
 
-          {/* CARD 2: CONTROLES DE LAUNCHER */}
-          <section className="card">
-            <h2 className="card-title">
-              <Home size={18} style={{color: 'var(--accent-blue)'}} />
-              Configurar Launcher Padrão
-            </h2>
+                <div className="app-actions-panel">
+                  <button 
+                    className="btn btn-teal btn-wide" 
+                    onClick={launchApp}
+                    disabled={!selectedApp}
+                  >
+                    <Play size={16} />
+                    Iniciar Aplicativo
+                  </button>
 
-            <div className="form-group">
-              <label className="form-label">Launcher Padrão Ativo:</label>
-              <div className="launcher-status-value" style={{
-                color: defaultLauncher.includes('Nenhum') || defaultLauncher.includes('Sem') ? 'var(--accent-blue)' : 'var(--accent-teal)',
-                fontWeight: 600
-              }}>
+                  <button 
+                    className="btn btn-wide" 
+                    onClick={stopApp}
+                    disabled={!selectedApp}
+                  >
+                    <Square size={16} />
+                    Forçar Parada
+                  </button>
+
+                  <button 
+                    className="btn btn-wide" 
+                    onClick={clearAppData}
+                    disabled={!selectedApp}
+                  >
+                    <RefreshCw size={16} />
+                    Limpar Dados / Cache
+                  </button>
+
+                  <button 
+                    className="btn btn-wide" 
+                    onClick={downloadSelectedAppApk}
+                    disabled={!selectedApp}
+                  >
+                    <Upload size={16} style={{ transform: 'rotate(180deg)' }} />
+                    Download do APK para o PC
+                  </button>
+
+                  <button 
+                    className="btn btn-red btn-wide" 
+                    onClick={uninstallApp}
+                    disabled={!selectedApp}
+                    style={{ marginTop: '16px' }}
+                  >
+                    <Trash2 size={16} />
+                    Desinstalar Aplicativo
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ABA: INSTALAR APK */}
+        {activeTab === 'install' && (
+          <div>
+            <h1 className="tab-title">Instalar APK</h1>
+            <p className="tab-subtitle">Arraste e solte ou envie um APK do computador para instalá-lo no aparelho conectado.</p>
+            
+            <div className="card">
+              <h2 className="card-title">
+                <Upload size={18} style={{color: 'var(--accent-purple)'}} />
+                Enviar APK do PC
+              </h2>
+              
+              <div 
+                className={`dropzone ${dragActive ? 'active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById('apk-file-input').click()}
+              >
+                <Upload className="dropzone-icon" size={36} />
+                <p style={{fontWeight: 700, fontSize: '0.95rem'}}>Arrastar & Soltar arquivo APK aqui</p>
+                <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>ou clique para explorar arquivos</p>
+                <input 
+                  id="apk-file-input"
+                  type="file" 
+                  accept=".apk" 
+                  style={{display: 'none'}} 
+                  onChange={handleFileChange}
+                />
+              </div>
+
+              {selectedFile && (
+                <div className="file-info">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Smartphone size={18} style={{ color: 'var(--accent-purple)' }} />
+                    <span style={{ fontWeight: 600 }}>{selectedFile.name}</span>
+                  </div>
+                  <button className="btn" onClick={() => setSelectedFile(null)} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                    Remover
+                  </button>
+                </div>
+              )}
+
+              <button 
+                className="btn btn-primary btn-wide" 
+                onClick={installApk}
+                disabled={!selectedFile || !selectedDevice}
+                style={{ marginTop: '8px' }}
+              >
+                <Upload size={16} />
+                Iniciar Instalação Remota
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ABA: CONFIGURAÇÕES DE LAUNCHER */}
+        {activeTab === 'launcher' && (
+          <div>
+            <h1 className="tab-title">Gerenciar Launcher</h1>
+            <p className="tab-subtitle">Defina e altere o launcher (tela inicial) padrão do seu aparelho Android.</p>
+            
+            <div className="card">
+              <h2 className="card-title">
+                <Home size={18} style={{color: 'var(--accent-purple)'}} />
+                Launcher Padrão Ativo
+              </h2>
+              <div className="launcher-status-value">
                 {defaultLauncher}
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Selecione para Ações:</label>
+            <div className="card">
+              <h2 className="card-title">
+                <Home size={18} style={{color: 'var(--accent-purple)'}} />
+                Configurar Novo Launcher
+              </h2>
+              
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: '1.5' }}>
+                Selecione o launcher instalado abaixo para defini-lo como padrão, ou dispare o seletor nativo do Android.
+              </p>
+
               <div className="launcher-picker-group">
                 <select 
-                  className="device-select"
-                  style={{flex: 1}}
+                  className="launcher-picker-select"
                   value={selectedLauncher}
                   onChange={(e) => setSelectedLauncher(e.target.value)}
                   disabled={launchers.length === 0}
                 >
                   {launchers.length === 0 ? (
-                    <option value="">Nenhum Launcher alternativo listado</option>
+                    <option value="">Nenhum Launcher detectado</option>
                   ) : (
-                    launchers.map(lnc => (
-                      <option key={lnc} value={lnc}>{lnc}</option>
+                    launchers.map(l => (
+                      <option key={l} value={l}>{l}</option>
                     ))
                   )}
                 </select>
-                <button className="btn" onClick={loadLauncherInfo} title="Buscar Launchers">
-                  <RefreshCw size={15} />
+
+                <button 
+                  className="btn btn-primary" 
+                  onClick={setLauncherDefault}
+                  disabled={!selectedLauncher}
+                >
+                  Definir Selecionado
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
+                <button className="btn" onClick={clearLauncherDefault}>
+                  Limpar Launcher Padrão
+                </button>
+                
+                <button className="btn" onClick={triggerLauncherPicker}>
+                  Abrir Seletor Nativamente
+                </button>
+              </div>
+              
+              <button 
+                className="btn btn-teal btn-wide" 
+                onClick={testLauncherSelected}
+                disabled={!selectedApp}
+                style={{ marginTop: '12px' }}
+              >
+                <Sparkles size={16} />
+                Testar Launcher Selecionado na Lista
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ABA: TERMINAL E LOGS */}
+        {activeTab === 'terminal' && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <h1 className="tab-title">Logs do Sistema</h1>
+            <p className="tab-subtitle">Acompanhe as operações do ADB executadas no dispositivo em tempo real.</p>
+            
+            <div className="card" style={{ flex: 1, marginBottom: 0 }}>
+              <h2 className="card-title" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+                <Terminal size={18} style={{color: 'var(--accent-purple)'}} />
+                Console ADB
+              </h2>
+
+              <div className="console-output" ref={consoleContainerRef}>
+                {logs.length === 0 ? (
+                  <div style={{color: 'var(--text-muted)'}}>Nenhum evento registrado.</div>
+                ) : (
+                  logs.map((logLine, idx) => (
+                    <div key={idx}>{logLine}</div>
+                  ))
+                )}
+              </div>
+
+              <div className="console-actions">
+                <button className="btn btn-red" onClick={() => apiFetch('/api/logs', { method: 'POST' })} style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
+                  Limpar logs do console
                 </button>
               </div>
             </div>
-
-            <div className="app-actions-grid" style={{marginTop: '5px'}}>
-              <button 
-                className="btn btn-blue" 
-                onClick={setLauncherDefault}
-                disabled={!selectedLauncher || !selectedDevice}
-              >
-                🏠 Definir Padrão
-              </button>
-              <button 
-                className="btn" 
-                onClick={clearLauncherDefault}
-                disabled={!selectedDevice}
-                style={{background: '#2c2c36'}}
-              >
-                🧹 Limpar Padrão
-              </button>
-            </div>
-
-            <button 
-              className="btn" 
-              onClick={triggerLauncherPicker}
-              disabled={!selectedDevice}
-              style={{background: '#2c2c36', padding: '10px'}}
-            >
-              📺 Abrir Menu do Seletor no Aparelho
-            </button>
-          </section>
-
-        </div>
-
-        {/* COLUNA DIREITA: LISTAGEM E CONTROLE DE APPS */}
-        <section className="card">
-          <h2 className="card-title">
-            <Layers size={18} style={{color: 'var(--accent-teal)'}} />
-            Gerenciador de Aplicativos
-          </h2>
-
-          <div className="search-container">
-            <div style={{position: 'relative', flex: 1}}>
-              <Search size={16} style={{position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)'}} />
-              <input 
-                type="text" 
-                className="search-input" 
-                style={{paddingLeft: '36px'}}
-                placeholder="Filtrar aplicativos instalados..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <button className="btn" onClick={loadApps} title="Atualizar Lista">
-              <RefreshCw size={15} />
-            </button>
           </div>
-
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <label className="checkbox-label">
-              <input 
-                type="checkbox" 
-                checked={showSystemApps}
-                onChange={(e) => setShowSystemApps(e.target.checked)}
-              />
-              Exibir Apps do Sistema
-            </label>
-            <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>
-              {filteredApps.length} de {apps.length} apps
-            </span>
-          </div>
-
-          <ul className="app-list">
-            {filteredApps.length === 0 ? (
-              <li style={{padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', fontSize: '0.85rem'}}>
-                {selectedDevice ? 'Nenhum aplicativo corresponde à busca.' : 'Conecte um aparelho para listar os aplicativos.'}
-              </li>
-            ) : (
-              filteredApps.map(pkg => (
-                <li 
-                  key={pkg}
-                  className={`app-item ${selectedApp === pkg ? 'selected' : ''}`}
-                  onClick={() => setSelectedApp(pkg)}
-                >
-                  {pkg}
-                </li>
-              ))
-            )}
-          </ul>
-
-          <div className="app-actions-grid">
-            <button 
-              className="btn btn-teal" 
-              onClick={launchApp}
-              disabled={!selectedApp}
-            >
-              <Play size={15} />
-              Iniciar App
-            </button>
-            <button 
-              className="btn" 
-              onClick={stopApp}
-              disabled={!selectedApp}
-              style={{background: '#2c2c36'}}
-            >
-              <Square size={15} />
-              Forçar Parada
-            </button>
-            <button 
-              className="btn" 
-              onClick={clearAppData}
-              disabled={!selectedApp}
-              style={{background: '#2c2c36'}}
-            >
-              🧹 Limpar Dados
-            </button>
-            <button 
-              className="btn btn-red" 
-              onClick={uninstallApp}
-              disabled={!selectedApp}
-            >
-              <Trash2 size={15} />
-              Desinstalar App
-            </button>
-
-            {/* NOVA AÇÃO: TESTAR LAUNCHER SELECIONADO NA LISTA */}
-            <button 
-              className="btn btn-primary btn-wide" 
-              onClick={testLauncherSelected}
-              disabled={!selectedApp}
-              style={{background: 'linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%)'}}
-            >
-              <Sparkles size={15} />
-              Testar Launcher Selecionado
-            </button>
-
-            {/* NOVA AÇÃO: EXTRAIR E BAIXAR APK PARA O COMPUTADOR */}
-            <button 
-              className="btn btn-teal btn-wide" 
-              onClick={downloadSelectedAppApk}
-              disabled={!selectedApp}
-              style={{background: 'linear-gradient(135deg, var(--accent-teal) 0%, #00b0ff 100%)', color: '#0d0d0d'}}
-            >
-              <Upload size={15} style={{ transform: 'rotate(180deg)' }} />
-              Baixar APK para o PC [Download]
-            </button>
-          </div>
-        </section>
-
+        )}
       </main>
-
-      {/* --- CARD INFERIOR: CONSOLE LOG --- */}
-      <footer className="card console-card">
-        <h2 className="card-title" style={{borderBottom: 'none', paddingBottom: 0}}>
-          <Terminal size={18} style={{color: 'var(--accent-teal)'}} />
-          Log do Sistema / Terminal ADB
-        </h2>
-
-        <div className="console-output">
-          {logs.length === 0 ? (
-            <div style={{color: 'var(--text-muted)'}}>Console ocioso. Conecte um aparelho para iniciar logs.</div>
-          ) : (
-            logs.map((logLine, idx) => (
-              <div key={idx}>{logLine}</div>
-            ))
-          )}
-          <div ref={consoleEndRef} />
-        </div>
-
-        <div className="console-actions">
-          <button className="btn" onClick={() => apiFetch('/api/logs', { method: 'POST' })} style={{padding: '5px 12px', fontSize: '0.75rem'}}>
-            Limpar Logs do Console
-          </button>
-        </div>
-      </footer>
-
-      {/* OVERLAY DE SERVIDOR OFFLINE */}
-      {!localServerRunning && (
-        <div className="overlay" style={{ zIndex: 10000, background: 'rgba(10, 10, 15, 0.96)' }}>
-          <div className="card" style={{ maxWidth: '550px', textAlign: 'center', padding: '40px', border: '1px solid rgba(124, 77, 255, 0.3)' }}>
-            <AlertCircle size={48} style={{ color: 'var(--accent-purple)', margin: '0 auto 20px auto' }} />
-            <h1 style={{ color: '#fff', fontSize: '1.8rem', fontWeight: 700, marginBottom: '10px' }}>
-              Servidor Desktop Offline
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '25px', fontSize: '0.95rem' }}>
-              Para que este painel da web possa se conectar com os seus dispositivos Android (TV, Celular) via USB ou Wi-Fi, o servidor local do ADB Companion precisa estar rodando no seu computador.
-            </p>
-            
-            <div style={{ background: '#13131c', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #1f1f2e' }}>
-              <p style={{ fontSize: '0.9rem', color: '#8888a5', margin: '0 0 10px 0' }}>Já tem o aplicativo instalado?</p>
-              <p style={{ fontSize: '0.95rem', color: 'var(--accent-teal)', fontWeight: 600, margin: 0 }}>
-                Basta abrir o arquivo <strong>ADB_Companion.exe</strong>
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <a 
-                href="/ADB_Companion_Setup.exe" 
-                className="btn btn-purple btn-wide" 
-                style={{ 
-                  background: 'linear-gradient(135deg, var(--accent-purple) 0%, #a855f7 100%)', 
-                  color: '#fff', 
-                  textDecoration: 'none',
-                  padding: '12.5px',
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 15px rgba(124, 77, 255, 0.4)'
-                }}
-                download
-              >
-                <Smartphone size={18} style={{ marginRight: '8px' }} />
-                Baixar Instalador do ADB Companion (.exe) - Recomendado
-              </a>
-
-              <a 
-                href="/ADB_Companion.zip" 
-                className="btn" 
-                style={{ 
-                  background: 'transparent', 
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#ccc', 
-                  textDecoration: 'none',
-                  padding: '10px',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem'
-                }}
-                download
-              >
-                <Upload size={16} style={{ marginRight: '8px', transform: 'rotate(180deg)' }} />
-                Baixar Versão Portátil (.zip)
-              </a>
-              <span style={{ fontSize: '0.8rem', color: '#55556d' }}>
-                O instalador oficial (.exe) ajuda a evitar falsos positivos de vírus no Windows Defender.
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
