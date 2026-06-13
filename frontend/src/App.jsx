@@ -31,6 +31,7 @@ const apiFetch = (url, options) => {
 export default function App() {
   // Estados da Aplicação
   const [adbStatus, setAdbStatus] = useState({ ready: false, percent: 0, status: 'Verificando...' });
+  const [localServerRunning, setLocalServerRunning] = useState(true);
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState('');
   const [apps, setApps] = useState([]);
@@ -70,6 +71,7 @@ export default function App() {
         const res = await apiFetch('/api/adb-status');
         const data = await res.json();
         setAdbStatus(data);
+        setLocalServerRunning(true);
         
         // Se o ADB não estiver pronto e não estiver baixando, inicia o download
         if (!data.ready && data.percent === 0 && data.status === 'Aguardando inicialização') {
@@ -77,6 +79,7 @@ export default function App() {
         }
       } catch (err) {
         console.error("Erro ao verificar ADB:", err);
+        setLocalServerRunning(false);
       }
     };
 
@@ -828,6 +831,53 @@ export default function App() {
           </button>
         </div>
       </footer>
+
+      {/* OVERLAY DE SERVIDOR OFFLINE */}
+      {!localServerRunning && (
+        <div className="overlay" style={{ zIndex: 10000, background: 'rgba(10, 10, 15, 0.96)' }}>
+          <div className="card" style={{ maxWidth: '550px', textAlign: 'center', padding: '40px', border: '1px solid rgba(124, 77, 255, 0.3)' }}>
+            <AlertCircle size={48} style={{ color: 'var(--accent-purple)', margin: '0 auto 20px auto' }} />
+            <h1 style={{ color: '#fff', fontSize: '1.8rem', fontWeight: 700, marginBottom: '10px' }}>
+              Servidor Desktop Offline
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '25px', fontSize: '0.95rem' }}>
+              Para que este painel da web possa se conectar com os seus dispositivos Android (TV, Celular) via USB ou Wi-Fi, o servidor local do ADB Companion precisa estar rodando no seu computador.
+            </p>
+            
+            <div style={{ background: '#13131c', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #1f1f2e' }}>
+              <p style={{ fontSize: '0.9rem', color: '#8888a5', margin: '0 0 10px 0' }}>Já tem o aplicativo instalado?</p>
+              <p style={{ fontSize: '0.95rem', color: 'var(--accent-teal)', fontWeight: 600, margin: 0 }}>
+                Basta abrir o arquivo <strong>ADB_Companion.exe</strong>
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <a 
+                href="/ADB_Companion.zip" 
+                className="btn btn-teal btn-wide" 
+                style={{ 
+                  background: 'linear-gradient(135deg, var(--accent-teal) 0%, #00b0ff 100%)', 
+                  color: '#0d0d0d', 
+                  textDecoration: 'none',
+                  padding: '12px',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px'
+                }}
+                download
+              >
+                <Upload size={18} style={{ marginRight: '8px', transform: 'rotate(180deg)' }} />
+                Baixar ADB Companion para Windows (.zip)
+              </a>
+              <span style={{ fontSize: '0.8rem', color: '#55556d' }}>
+                Descompacte o arquivo ZIP e execute o <strong>ADB_Companion.exe</strong>. O site se conectará automaticamente.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
