@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node / Frontend dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Vite / Build outputs
+dist/
+dist-ssr/
+*.local
+
+# PyInstaller / Build tools
+build/
+*.spec
+
+# Platform Tools (ADB local binary download)
+platform-tools/
+platform_tools_temp.zip
+
+# Logs and databases
+*.log
+*.sqlite
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store
