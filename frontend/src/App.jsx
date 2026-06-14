@@ -217,6 +217,8 @@ export default function App() {
     } catch (err) {
       console.error("Erro ao carregar informações de launcher:", err);
     }
+  };
+
   // Buscar logs do console do backend
   const fetchLogs = async () => {
     try {

@@ -397,7 +397,8 @@ class APIRequestHandler(http.server.SimpleHTTPRequestHandler):
             log_event(f"Puxando APK do dispositivo ({pkg}) de {device_apk_path}...")
             pull_stdout, pull_stderr, pull_code = run_adb_command(["pull", device_apk_path, local_temp_path])
             
-            if pull_code != 0 or not os.path.exists(local_temp_path):
+            # Mudamos para verificar a existência do arquivo e tamanho, pois o adb pull escreve progresso no stderr
+            if not os.path.exists(local_temp_path) or os.path.getsize(local_temp_path) == 0:
                 self.send_json({"error": f"Falha ao extrair APK: {pull_stderr or 'Erro no adb pull'}"}, status=400)
                 return
                 
