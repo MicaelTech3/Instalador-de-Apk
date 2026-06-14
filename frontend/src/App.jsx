@@ -17,12 +17,15 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+// --- VERIFICAÇÃO DE AMBIENTE (WEB APENAS VS LOCAL) ---
+const isWebOnly = window.location.hostname !== 'localhost' && 
+                  window.location.hostname !== '127.0.0.1' &&
+                  window.location.port !== '5000' && 
+                  window.location.port !== '5173';
+
 // --- CENTRALIZADOR DE REQUISIÇÕES COM BACKEND LOCAL ---
 const apiFetch = (url, options) => {
-  const isLocal = window.location.hostname === 'localhost' || 
-                  window.location.hostname === '127.0.0.1' || 
-                  window.location.port === '5000' || 
-                  window.location.port === '5173';
+  const isLocal = !isWebOnly;
   const apiBase = isLocal ? '' : 'http://localhost:5000';
   return fetch(`${apiBase}${url}`, options);
 };
@@ -31,7 +34,7 @@ export default function App() {
   // Estados da Aplicação
   const [adbStatus, setAdbStatus] = useState({ ready: false, percent: 0, status: 'Verificando...' });
   const [localServerRunning, setLocalServerRunning] = useState(true);
-  const [activeTab, setActiveTab] = useState('apps'); // tabs: apps, install, launcher, terminal
+  const [activeTab, setActiveTab] = useState(isWebOnly ? 'welcome' : 'apps'); // tabs: welcome, apps, install, launcher, terminal
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState('');
   const [apps, setApps] = useState([]);
@@ -42,6 +45,10 @@ export default function App() {
   const [launchers, setLaunchers] = useState([]);
   const [selectedLauncher, setSelectedLauncher] = useState('');
   const [logs, setLogs] = useState([]);
+  
+  // Novos Estados
+  const [customLauncherInput, setCustomLauncherInput] = useState('');
+  const [terminalInput, setTerminalInput] = useState('');
   
   // Estados de Operação / Upload
   const [selectedFile, setSelectedFile] = useState(null);
@@ -100,16 +107,6 @@ export default function App() {
         setSelectedDevice(data.selected || '');
       } catch (err) {
         console.error("Erro ao buscar dispositivos:", err);
-      }
-    };
-
-    const fetchLogs = async () => {
-      try {
-        const res = await apiFetch('/api/logs');
-        const data = await res.json();
-        setLogs(data.logs);
-      } catch (err) {
-        console.error("Erro ao buscar logs:", err);
       }
     };
 
@@ -219,6 +216,15 @@ export default function App() {
       }
     } catch (err) {
       console.error("Erro ao carregar informações de launcher:", err);
+    }
+  // Buscar logs do console do backend
+  const fetchLogs = async () => {
+    try {
+      const res = await apiFetch('/api/logs');
+      const data = await res.json();
+      setLogs(data.logs);
+    } catch (err) {
+      console.error("Erro ao buscar logs:", err);
     }
   };
 
@@ -485,8 +491,8 @@ export default function App() {
     pkg.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // SE O SERVIDOR DESKTOP NÃO ESTIVER RODANDO, EXIBE A PÁGINA DE BOAS VINDAS / DOWNLOAD
-  if (!localServerRunning) {
+  // SE O SERVIDOR DESKTOP NÃO ESTIVER RODANDO E ESTIVERMOS NO SITE WEB (VERCEL), EXIBE A PÁGINA DE BOAS VINDAS / DOWNLOAD COMPLETA
+  if (!localServerRunning && isWebOnly) {
     return (
       <div className="landing-page">
         {/* HEADER DE BOAS VINDAS */}
@@ -637,13 +643,21 @@ export default function App() {
           </div>
 
           <div className="sidebar-device-status">
-            <div className={`status-dot ${selectedDevice ? 'connected' : 'disconnected'}`}></div>
-            <span className="status-text-compact">
-              {selectedDevice ? selectedDevice : 'Sem dispositivo'}
+            <div className={`status-dot ${localServerRunning ? (selectedDevice ? 'connected' : 'disconnected') : 'disconnected'}`}></div>
+            <span className="status-text-compact" style={{ color: localServerRunning ? 'inherit' : 'var(--accent-red)', fontWeight: localServerRunning ? '500' : '700' }}>
+              {localServerRunning ? (selectedDevice ? selectedDevice : 'Sem dispositivo') : 'Servidor Offline'}
             </span>
           </div>
 
           <nav className="sidebar-nav">
+            <button 
+              className={`nav-item ${activeTab === 'welcome' ? 'active' : ''}`}
+              onClick={() => setActiveTab('welcome')}
+            >
+              <Sparkles size={18} />
+              <span>Boas-vindas & Downloads</span>
+            </button>
+
             <button 
               className={`nav-item ${activeTab === 'apps' ? 'active' : ''}`}
               onClick={() => setActiveTab('apps')}
@@ -704,6 +718,73 @@ export default function App() {
       {/* PAINEL PRINCIPAL DE CONTEÚDO */}
       <main className="main-content">
         
+        {/* ABA: BOAS-VINDAS & DOWNLOADS */}
+        {activeTab === 'welcome' && (
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <h1 className="tab-title">Central de Downloads & Boas-vindas</h1>
+            <p className="tab-subtitle font-sans">Bem-vindo ao ADB Companion! Aqui você encontra os instaladores e informações gerais sobre o sistema.</p>
+            
+            <div className="card" style={{ padding: '24px', textAlign: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
+                Gerencie seu Android e Android TV <span style={{ color: 'var(--accent-purple)' }}>direto pelo navegador</span>
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto 20px auto' }}>
+                Instale APKs, gerencie pacotes, altere launchers padrão e envie comandos ADB para a sua TV Box, Fire Stick ou Celular através de um instalador leve e prático.
+              </p>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a 
+                  href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/1.1/ADB_Companion_Setup.exe" 
+                  className="btn btn-primary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Smartphone size={18} />
+                  Baixar Instalador Oficial (.exe)
+                </a>
+                
+                <a 
+                  href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/1.1/ADB_Companion.zip" 
+                  className="btn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Upload size={16} style={{ transform: 'rotate(180deg)' }} />
+                  Baixar Versão Portátil (.zip)
+                </a>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              <div className="card" style={{ marginBottom: 0 }}>
+                <div style={{ background: 'rgba(124, 58, 237, 0.1)', color: 'var(--accent-purple)', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                  <Upload size={20} />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Instalador de APKs</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Arraste e solte arquivos APK diretamente do seu computador para a janela da web e instale-os no seu aparelho sem digitar nenhum comando.</p>
+              </div>
+
+              <div className="card" style={{ marginBottom: 0 }}>
+                <div style={{ background: 'rgba(13, 148, 136, 0.1)', color: 'var(--accent-teal)', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                  <Layers size={20} />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Gerenciador de Aplicativos</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Monitore os apps instalados. Você pode iniciar aplicativos remotamente, forçar parada, limpar cache/dados ou desinstalar com um clique.</p>
+              </div>
+
+              <div className="card" style={{ marginBottom: 0 }}>
+                <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-purple)', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                  <Home size={20} />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Configurador de Launcher</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Defina launchers alternativos como Projectivy Launcher, Wolf Launcher ou ATV Launcher como padrão no seu sistema Android TV de forma simples.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ABA: MEUS APLICATIVOS */}
         {activeTab === 'apps' && (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -747,6 +828,36 @@ export default function App() {
                 >
                   <Upload size={15} style={{ transform: 'rotate(180deg)' }} />
                   Download do APK para o PC
+                </button>
+
+                <button 
+                  className="btn" 
+                  onClick={async () => {
+                    if (!selectedApp) return;
+                    setLoadingAction('Definindo launcher...');
+                    try {
+                      const res = await apiFetch('/api/launcher/test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ package: selectedApp })
+                      });
+                      const data = await res.json();
+                      if (res.ok) {
+                        showToast(`${selectedApp} definido como Launcher!`, 'success');
+                      } else {
+                        alert(`Erro: ${data.error}`);
+                      }
+                    } catch (err) {
+                      showToast('Erro de conexão', 'error');
+                    } finally {
+                      setLoadingAction('');
+                    }
+                  }}
+                  disabled={!selectedApp}
+                  style={{ background: 'rgba(124, 58, 237, 0.1)', color: 'var(--accent-purple)' }}
+                >
+                  <Home size={15} />
+                  Definir como Launcher
                 </button>
 
                 <button 
@@ -936,6 +1047,60 @@ export default function App() {
                   Abrir Seletor Nativamente
                 </button>
               </div>
+
+              <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>
+                  Ou defina um launcher manualmente por pacote/atividade:
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: com.android.chrome" 
+                    value={customLauncherInput}
+                    onChange={(e) => setCustomLauncherInput(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-input)',
+                      color: 'var(--text-main)',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                  <button 
+                    className="btn btn-primary"
+                    onClick={async () => {
+                      if (!customLauncherInput.trim()) return;
+                      setLoadingAction('Configurando launcher...');
+                      try {
+                        const res = await apiFetch('/api/launcher/set', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ launcher: customLauncherInput })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          showToast('Launcher configurado com sucesso!', 'success');
+                          loadLauncherInfo();
+                          setCustomLauncherInput('');
+                        } else {
+                          alert(`Erro: ${data.error}`);
+                        }
+                      } catch (err) {
+                        showToast('Erro ao conectar ao servidor', 'error');
+                      } finally {
+                        setLoadingAction('');
+                      }
+                    }}
+                  >
+                    Definir
+                  </button>
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                  O sistema tentará resolver automaticamente a atividade de inicialização correspondente ao pacote fornecido.
+                </span>
+              </div>
               
               <button 
                 className="btn btn-teal btn-wide" 
@@ -971,6 +1136,63 @@ export default function App() {
                   ))
                 )}
               </div>
+
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!terminalInput.trim()) return;
+                  const cmd = terminalInput;
+                  setTerminalInput('');
+                  try {
+                    await apiFetch('/api/terminal/run', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ command: cmd })
+                    });
+                    fetchLogs();
+                  } catch (err) {
+                    showToast('Erro ao enviar comando', 'error');
+                  }
+                }}
+                style={{ 
+                  display: 'flex', 
+                  gap: '8px', 
+                  padding: '12px 16px', 
+                  borderTop: '1px solid var(--border-color)',
+                  background: 'rgba(10, 10, 15, 0.3)',
+                  alignItems: 'center'
+                }}
+              >
+                <span style={{ 
+                  fontFamily: 'var(--font-monospace)', 
+                  color: 'var(--accent-purple)', 
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  userSelect: 'none'
+                }}>
+                  adb
+                </span>
+                <input 
+                  type="text" 
+                  placeholder="Digite comandos (ex: shell pm list packages -3)" 
+                  value={terminalInput}
+                  onChange={(e) => setTerminalInput(e.target.value)}
+                  style={{
+                    flex: 1,
+                    fontFamily: 'var(--font-monospace)',
+                    fontSize: '0.85rem',
+                    background: 'var(--bg-input)',
+                    border: '1px solid var(--border-color)',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                />
+                <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px', height: '36px' }}>
+                  Enviar
+                </button>
+              </form>
 
               <div className="console-actions">
                 <button className="btn btn-red" onClick={() => apiFetch('/api/logs', { method: 'POST' })} style={{ padding: '8px 16px', fontSize: '0.8rem' }}>

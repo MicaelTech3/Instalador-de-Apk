@@ -599,6 +599,17 @@ class APIRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json({"error": "Parâmetro 'launcher' ausente"}, status=400)
                 return
             log_event(f"Definindo launcher padrão: {launcher}...")
+            
+            # Se for informado apenas o pacote (sem a atividade, ex: com.android.chrome), resolvemos a atividade principal!
+            if "/" not in launcher:
+                log_event(f"Resolvendo atividade principal para {launcher}...")
+                stdout_resolve, _, code_resolve = run_adb_command(["shell", "cmd", "package", "resolve-activity", "--brief", launcher])
+                if code_resolve == 0 and stdout_resolve:
+                    for line in stdout_resolve.splitlines():
+                        if "/" in line and not line.startswith("priority:"):
+                            launcher = line.strip()
+                            break
+                            
             stdout, stderr, code = run_adb_command(["shell", "cmd", "package", "set-home-activity", launcher])
             if code == 0:
                 self.send_json({"success": True})
@@ -644,9 +655,18 @@ class APIRequestHandler(http.server.SimpleHTTPRequestHandler):
                         break
                         
             if not target_launcher:
+                log_event(f"App {pkg} não é um launcher padrão. Tentando resolver atividade principal...")
+                stdout_resolve, _, code_resolve = run_adb_command(["shell", "cmd", "package", "resolve-activity", "--brief", pkg])
+                if code_resolve == 0 and stdout_resolve:
+                    for line in stdout_resolve.splitlines():
+                        if "/" in line and not line.startswith("priority:"):
+                            target_launcher = line.strip()
+                            break
+                            
+            if not target_launcher:
                 self.send_json({
                     "success": False, 
-                    "error": f"O app {pkg} não possui uma atividade de Launcher (HOME) registrada no sistema Android."
+                    "error": f"Não foi possível resolver a atividade principal do app {pkg}."
                 }, status=400)
                 return
                 
@@ -664,6 +684,40 @@ class APIRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json({"success": True, "message": f"{pkg} definido como launcher padrão e aberto!"})
             else:
                 self.send_json({"success": True, "message": f"{pkg} definido, mas falhou ao simular clique HOME: {stderr or stdout}"})
+            return
+
+        elif path == "/api/terminal/run":
+            command = params.get("command", "").strip()
+            if not command:
+                self.send_json({"error": "Comando ausente"}, status=400)
+                return
+                
+            # Remove prefixo "adb " se o usuário digitou
+            if command.lower().startswith("adb "):
+                command = command[4:].strip()
+                
+            import shlex
+            try:
+                args = shlex.split(command)
+            except Exception:
+                args = command.split()
+                
+            log_event(f"Comando do Terminal: adb {' '.join(args)}")
+            stdout, stderr, code = run_adb_command(args)
+            
+            if stdout:
+                for line in stdout.splitlines():
+                    log_event(line)
+            if stderr:
+                for line in stderr.splitlines():
+                    log_event(f"Erro: {line}")
+                    
+            self.send_json({
+                "success": code == 0,
+                "stdout": stdout,
+                "stderr": stderr,
+                "code": code
+            })
             return
             
         else:
