@@ -726,10 +726,9 @@ if __name__ == "__main__":
                 url=url_to_open,
                 width=1320,
                 height=880,
-                resizable=True,
-                icon=icon_path
+                resizable=True
             )
-            webview.start()
+            webview.start(icon=icon_path)
             log_event("Janela fechada pelo usuário. Encerrando servidor...")
         else:
             # Caso contrário, abre o navegador padrão e roda o servidor na thread principal

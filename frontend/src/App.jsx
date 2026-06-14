@@ -511,7 +511,7 @@ export default function App() {
 
           <div className="hero-buttons">
             <a 
-              href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/v1.0.0/ADB_Companion_Setup.exe" 
+              href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/1.1/ADB_Companion_Setup.exe" 
               className="btn-hero-primary"
               target="_blank"
               rel="noopener noreferrer"
@@ -521,7 +521,7 @@ export default function App() {
             </a>
             
             <a 
-              href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/v1.0.0/ADB_Companion.zip" 
+              href="https://github.com/MicaelTech3/Instalador-de-Apk/releases/download/1.1/ADB_Companion.zip" 
               className="btn-hero-secondary"
               target="_blank"
               rel="noopener noreferrer"
