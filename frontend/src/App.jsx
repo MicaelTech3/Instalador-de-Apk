@@ -689,7 +689,15 @@ export default function App() {
               onClick={() => setActiveTab('terminal')}
             >
               <Terminal size={18} />
-              <span>Console & Logs</span>
+              <span>Terminal ADB</span>
+            </button>
+
+            <button 
+              className={`nav-item ${activeTab === 'logs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('logs')}
+            >
+              <Layers size={18} style={{ opacity: 0.8 }} />
+              <span>Logs do Sistema</span>
             </button>
           </nav>
         </div>
@@ -710,10 +718,35 @@ export default function App() {
               ))
             )}
           </select>
-          <button className="btn-sidebar-refresh" onClick={refreshDevices}>
-            <RefreshCw size={14} />
-            <span>Atualizar Lista</span>
-          </button>
+          
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button className="btn-sidebar-refresh" onClick={refreshDevices} style={{ flex: 1 }}>
+              <RefreshCw size={12} />
+              <span>Atualizar</span>
+            </button>
+          </div>
+          
+          <a 
+            href="https://github.com/MicaelTech3/Instalador-de-Apk" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn btn-primary"
+            style={{ 
+              marginTop: '12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '8px',
+              textDecoration: 'none',
+              fontSize: '0.85rem',
+              width: '100%',
+              padding: '10px 0',
+              fontWeight: 600
+            }}
+          >
+            <Sparkles size={15} />
+            <span>Site para Baixar App</span>
+          </a>
         </div>
       </aside>
 
@@ -1117,21 +1150,21 @@ export default function App() {
           </div>
         )}
 
-        {/* ABA: TERMINAL E LOGS */}
+        {/* ABA: TERMINAL ADB INTERATIVO */}
         {activeTab === 'terminal' && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <h1 className="tab-title">Logs do Sistema</h1>
-            <p className="tab-subtitle">Acompanhe as operações do ADB executadas no dispositivo em tempo real.</p>
+            <h1 className="tab-title">Terminal ADB Interativo</h1>
+            <p className="tab-subtitle">Digite e execute comandos ADB diretamente no dispositivo conectado sem precisar digitar "adb" na frente.</p>
             
-            <div className="card" style={{ flex: 1, marginBottom: 0 }}>
+            <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', marginBottom: 0 }}>
               <h2 className="card-title" style={{ borderBottom: 'none', paddingBottom: 0 }}>
                 <Terminal size={18} style={{color: 'var(--accent-purple)'}} />
-                Console ADB
+                Console de Comando
               </h2>
 
-              <div className="console-output" ref={consoleContainerRef}>
+              <div className="console-output" ref={consoleContainerRef} style={{ flex: 1, minHeight: '200px', overflowY: 'auto', padding: '16px' }}>
                 {logs.length === 0 ? (
-                  <div style={{color: 'var(--text-muted)'}}>Nenhum evento registrado.</div>
+                  <div style={{color: 'var(--text-muted)'}}>Nenhum comando executado. Digite um comando abaixo para iniciar.</div>
                 ) : (
                   logs.map((logLine, idx) => (
                     <div key={idx}>{logLine}</div>
@@ -1158,8 +1191,8 @@ export default function App() {
                 }}
                 style={{ 
                   display: 'flex', 
-                  gap: '8px', 
-                  padding: '12px 16px', 
+                  gap: '12px', 
+                  padding: '16px', 
                   borderTop: '1px solid var(--border-color)',
                   background: 'rgba(10, 10, 15, 0.3)',
                   alignItems: 'center'
@@ -1169,7 +1202,7 @@ export default function App() {
                   fontFamily: 'var(--font-monospace)', 
                   color: 'var(--accent-purple)', 
                   fontWeight: 700,
-                  fontSize: '0.9rem',
+                  fontSize: '1rem',
                   userSelect: 'none'
                 }}>
                   adb
@@ -1182,22 +1215,48 @@ export default function App() {
                   style={{
                     flex: 1,
                     fontFamily: 'var(--font-monospace)',
-                    fontSize: '0.85rem',
+                    fontSize: '0.9rem',
                     background: 'var(--bg-input)',
                     border: '1px solid var(--border-color)',
-                    padding: '8px 12px',
-                    borderRadius: '4px',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
                     color: 'var(--text-main)',
                     outline: 'none'
                   }}
+                  autoFocus
                 />
-                <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px', height: '36px' }}>
+                <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', height: '42px' }}>
                   Enviar
                 </button>
               </form>
+            </div>
+          </div>
+        )}
 
-              <div className="console-actions">
-                <button className="btn btn-red" onClick={() => apiFetch('/api/logs', { method: 'POST' })} style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
+        {/* ABA: LOGS DO SISTEMA */}
+        {activeTab === 'logs' && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <h1 className="tab-title">Logs do Sistema</h1>
+            <p className="tab-subtitle">Acompanhe o histórico de eventos e respostas do servidor local em tempo real.</p>
+            
+            <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', marginBottom: 0 }}>
+              <h2 className="card-title" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+                <Layers size={18} style={{color: 'var(--accent-teal)'}} />
+                Histórico de Logs
+              </h2>
+
+              <div className="console-output" style={{ flex: 1, minHeight: '200px', overflowY: 'auto', padding: '16px' }}>
+                {logs.length === 0 ? (
+                  <div style={{color: 'var(--text-muted)'}}>Nenhum log registrado.</div>
+                ) : (
+                  logs.map((logLine, idx) => (
+                    <div key={idx}>{logLine}</div>
+                  ))
+                )}
+              </div>
+
+              <div className="console-actions" style={{ padding: '16px', borderTop: '1px solid var(--border-color)' }}>
+                <button className="btn btn-red" onClick={() => apiFetch('/api/logs', { method: 'POST' })} style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
                   Limpar logs do console
                 </button>
               </div>
